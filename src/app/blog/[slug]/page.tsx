@@ -1,0 +1,152 @@
+"use client";
+
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ReportButton } from "@/components/shared/report-button";
+import Link from "next/link";
+
+interface ArticleDetail {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  author: { id: string; displayName: string; avatarUrl?: string | null };
+  tags: { tag: { name: string } }[];
+  series?: {
+    title: string;
+    articles: { id: string; title: string; slug: string; seriesOrder: number | null }[];
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function BlogArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [article, setArticle] = useState<ArticleDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchArticle() {
+      const res = await fetch(`/api/blog/${slug}`);
+      if (!res.ok) {
+        router.push("/blog");
+        return;
+      }
+      const data = await res.json();
+      setArticle(data);
+      setLoading(false);
+    }
+    fetchArticle();
+  }, [slug, router]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-3xl py-6 px-4 space-y-4">
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (!article) return null;
+
+  const isAuthor = session?.user?.id === article.author.id;
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  return (
+    <div className="container mx-auto max-w-3xl py-6 px-4">
+      <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
+        &larr; 返回博客
+      </Button>
+
+      {/* Series navigation */}
+      {article.series && article.series.articles.length > 1 && (
+        <Card className="mb-6">
+          <CardContent className="pt-4">
+            <p className="text-sm font-medium mb-2">
+              {article.series.title}
+            </p>
+            <div className="space-y-1">
+              {article.series.articles.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/blog/${item.slug}`}
+                  className={`block text-sm px-2 py-1 rounded ${
+                    item.slug === slug
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {item.seriesOrder ? `${item.seriesOrder}. ` : ""}
+                  {item.title}
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <article>
+        <h1 className="text-3xl font-bold mb-4">{article.title}</h1>
+
+        <div className="flex items-center gap-3 mb-4">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback>
+              {article.author.displayName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium">{article.author.displayName}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(article.createdAt).toLocaleDateString("zh-CN")}
+              {article.updatedAt !== article.createdAt && " (已编辑)"}
+            </p>
+          </div>
+          <div className="flex-1" />
+          {(isAuthor || isAdmin) && (
+            <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/blog/${slug}/edit`} />}>
+              编辑
+            </Button>
+          )}
+        </div>
+
+        {article.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-6">
+            {article.tags.map(({ tag }) => (
+              <Link key={tag.name} href={`/blog?tag=${encodeURIComponent(tag.name)}`}>
+                <Badge variant="secondary">{tag.name}</Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        <Separator className="mb-6" />
+
+        <div
+          className="prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
+
+        <Separator className="my-6" />
+
+        <div className="flex items-center gap-2">
+          <ReportButton contentType="article" contentId={article.slug} />
+        </div>
+      </article>
+    </div>
+  );
+}

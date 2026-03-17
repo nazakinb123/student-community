@@ -1,0 +1,54 @@
+import { z } from "zod";
+
+export const registerSchema = z.object({
+  email: z.string().email("请输入有效的邮箱地址"),
+  password: z.string().min(6, "密码至少6个字符"),
+  displayName: z
+    .string()
+    .min(2, "昵称至少2个字符")
+    .max(20, "昵称最多20个字符"),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("请输入有效的邮箱地址"),
+  password: z.string().min(1, "请输入密码"),
+});
+
+export const treeholePostSchema = z.object({
+  content: z
+    .string()
+    .min(1, "内容不能为空")
+    .max(2000, "内容最多2000个字符"),
+  isAnonymous: z.boolean().default(false),
+});
+
+export const treeholeCommentSchema = z.object({
+  content: z
+    .string()
+    .min(1, "评论不能为空")
+    .max(500, "评论最多500个字符"),
+  isAnonymous: z.boolean().default(false),
+  parentId: z.string().optional(),
+});
+
+export const blogArticleSchema = z.object({
+  title: z.string().min(1, "标题不能为空").max(200, "标题最多200个字符"),
+  content: z.string().min(1, "内容不能为空"),
+  excerpt: z.string().max(500, "摘要最多500个字符").optional(),
+  coverImage: z.string().url().optional().or(z.literal("")),
+  isDraft: z.boolean().default(true),
+  tags: z.array(z.string()).max(10, "最多10个标签").default([]),
+  seriesId: z.string().optional(),
+  seriesOrder: z.number().int().positive().optional(),
+});
+
+export const reportSchema = z.object({
+  reason: z.string().max(500, "举报原因最多500个字符").optional(),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type TreeholePostInput = z.infer<typeof treeholePostSchema>;
+export type TreeholeCommentInput = z.infer<typeof treeholeCommentSchema>;
+export type BlogArticleInput = z.infer<typeof blogArticleSchema>;
+export type ReportInput = z.infer<typeof reportSchema>;

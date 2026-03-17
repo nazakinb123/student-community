@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: student_community
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/student_community
+      AUTH_SECRET: ${AUTH_SECRET:-change-this-in-production}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      LLM_MODERATION_API_KEY: ${LLM_MODERATION_API_KEY:-}
+      LLM_MODERATION_PROVIDER: ${LLM_MODERATION_PROVIDER:-}
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
