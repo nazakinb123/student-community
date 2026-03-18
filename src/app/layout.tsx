@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "学生社群",
-  description: "树洞 · 课评 · 博客 — 属于学生的社群平台",
+  title: "NYU树洞",
+  description: "匿名树洞 · 博客 · 课评 — NYU学生社区",
 };
 
 export default function RootLayout({

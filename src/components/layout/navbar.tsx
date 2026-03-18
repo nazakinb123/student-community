@@ -30,8 +30,8 @@ export function Navbar() {
       <div className="container mx-auto flex h-14 items-center px-4">
         {/* Logo */}
         <Link href="/" className="mr-6 flex items-center space-x-2">
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            学生社群
+          <span className="text-xl font-bold bg-gradient-to-r from-[#57068c] to-[#7c3aed] bg-clip-text text-transparent">
+            NYU树洞
           </span>
         </Link>
 
